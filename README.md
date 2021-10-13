@@ -1,4 +1,4 @@
-# machine-image-redis
+# Machine-image-redis
 
 # Overview
 This repository contains Ansible roles that are used to setup redis in our AWS infrastructure.
