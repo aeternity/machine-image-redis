@@ -1,0 +1,63 @@
+---
+- name: Install packages
+  yum:
+    name: ["make", "gcc", "wget"]
+    state: present
+    update_cache: true
+  become: true
+
+- name: Add user "redis"  
+  user:
+    name: redis
+    shell: /sbin/nologin
+    append: yes
+    comment: "redis nologin User"
+    state: present
+  become: true
+
+- name: Create a redis log file
+  file:
+    path: "/var/log/redis-server.log"
+    state: touch
+    mode: 0755
+    owner: redis
+
+- name: Create redis directory
+  file:
+    path: /etc/redis
+    state: directory
+    mode: 0755
+    owner: redis
+
+- copy:
+    src: "redis_conf/redis.conf"
+    dest: /etc/redis/redis.conf
+    owner: redis
+
+- copy:
+    src: "redis-server.service"
+    dest: /etc/systemd/system/redis-server.service
+
+- name: Download redis source
+  shell: wget -O - http://download.redis.io/releases/redis-{{version}}.tar.gz | tar -xz -C /tmp creates=/tmp/redis-{{version}}
+  tags: redis
+
+- name: Install redis
+  shell: make chdir=/tmp/redis-{{version}} creates=/tmp/redis-{{version}}/src/redis-server
+  tags: redis
+
+- name: Move compiled redis binaries
+  shell: cp -f {{item}} /usr/local/bin chdir=/tmp/redis-{{version}}/src
+  with_items:
+  - redis-cli
+  - redis-server
+  - redis-benchmark
+  tags: redis
+
+- name: Reload SystemD Daemon and enable redis
+  systemd:
+    name: redis-server
+    daemon_reload: yes
+    state: started
+    enabled: yes
+

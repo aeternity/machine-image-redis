@@ -1,0 +1,39 @@
+{
+    "variables": {
+        "region": "eu-central-1",
+        "ANSIBLE_ROLES_PATH": "../roles"
+    },
+    "builders": [
+        {
+            "type": "docker",
+            "image": "centos/test-systemd",
+            "privileged": true,
+            "pull": false,
+            "commit": true,
+            "run_command": ["-d", "-i", "-t", "--", "{{.Image}}"]
+        }
+    ],
+    "provisioners": [
+        {
+            "type": "ansible",
+            "user": "root",
+            "extra_arguments": [
+                "--extra-vars",
+                "aws_region={{user `region`}} test_run=true"
+            ],
+            "playbook_file": "./provision/site.yml",
+            "groups": [
+                "development"
+            ]
+        }
+    ],
+    "post-processors": [
+        [
+            {
+                "type": "docker-tag",
+                "repository": "aeturnity/test",
+                "tag": "latest"
+            }
+        ]
+    ]
+}

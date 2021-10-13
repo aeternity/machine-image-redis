@@ -1,0 +1,15 @@
+[Unit]
+Description=Redis persistent key-value storage
+After=network.target
+
+[Service]
+Type=simple
+Restart=on-failure
+
+ExecStart=/usr/local/bin/redis-server /etc/redis/redis.conf --supervised systemd --daemonize no
+ExecStop=/usr/local/bin/redis-cli -p 6379 shutdown
+ExecReload=/bin/kill -USR2 $MAINPID
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,61 @@
+{
+    "variables": {
+      "aws_access_key": "",
+      "aws_secret_key": "",
+      "region": "eu-central-1",
+      "ami_name": "redis",
+      "ANSIBLE_ROLES_PATH": "../roles"
+    },
+    "builders": [
+      { 
+        "type": "amazon-ebs",
+        "access_key": "{{user `aws_access_key`}}",
+        "secret_key": "{{user `aws_secret_key`}}",
+        "name": "{{user `ami_name`}}",
+        "region": "{{user `region`}}",
+        "source_ami_filter": {
+          "filters": {
+            "virtualization-type": "hvm",
+            "name": "amzn2-ami-hvm-2.0.*-x86_64-gp2",
+            "root-device-type": "ebs"
+          },
+          "owners": ["amazon"],
+          "most_recent": true
+        },
+        "instance_type": "t2.medium",
+        "vpc_id": "vpc-02652235eddc2ad95",
+        "subnet_id": "subnet-0c619a3eda9bace3c",
+        "communicator": "ssh",
+        "ssh_pty": true,
+        "ssh_username": "ec2-user",
+        "ssh_timeout": "5m",
+        "associate_public_ip_address": true,
+        "ami_virtualization_type": "hvm",
+        "ami_description": "redis",
+        "ami_name": "{{user `ami_name`}}_{{isotime | clean_resource_name}}",
+        "launch_block_device_mappings": [
+          {
+            "device_name": "/dev/xvda",
+            "volume_size": 20,
+            "volume_type": "gp2",
+            "delete_on_termination": true
+          }
+        ],
+        "tags": {
+          "Name": "redis",
+          "Provisioner": "Packer-Ansible"
+        }
+      }
+    ],
+    "provisioners": [{
+      "type": "ansible",
+      "playbook_file": "./provision/site.yml",
+      "ansible_env_vars": "ANSIBLE_ROLES_PATH={{user `ANSIBLE_ROLES_PATH`}}",
+      "user": "ec2-user",
+      "extra_arguments": [
+           "-vv",
+          "--extra-vars",
+          "aws_region={{user `region`}}"
+      ]
+  }]
+}
